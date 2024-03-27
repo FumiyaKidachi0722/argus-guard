@@ -8,3 +8,4 @@ eventlet
 black
 # コードの規則チェック
 flake8
+dlib
