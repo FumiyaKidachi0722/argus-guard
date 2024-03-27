@@ -1,0 +1,90 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Webカメラで顔認証</title>
+  </head>
+  <body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">認証</button>
+    <button id="register">登録</button>
+    <input type="text" id="nameInput" placeholder="名前を入力" />
+    <input type="file" id="imageInput" accept="image/*" />
+    <script>
+      const video = document.getElementById("video");
+      const captureButton = document.getElementById("capture");
+      const registerButton = document.getElementById("register");
+      const nameInput = document.getElementById("nameInput");
+      const imageInput = document.getElementById("imageInput");
+
+      // Webカメラを起動
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(function (stream) {
+            video.srcObject = stream;
+            video.play();
+          });
+      }
+
+      captureButton.addEventListener("click", function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = 640;
+        canvas.height = 480;
+        canvas
+          .getContext("2d")
+          .drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL("image/png");
+
+        // 画像データをサーバーに送信
+        fetch("/authenticate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ image: imageData }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message); // 認証結果を表示
+          });
+      });
+
+      registerButton.addEventListener("click", function () {
+        const name = nameInput.value.trim();
+        if (!name) {
+          alert("名前を入力してください");
+          return;
+        }
+        const file = imageInput.files[0];
+        if (!file) {
+          alert("画像を選択してください");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const imageData = reader.result;
+
+          // 画像データと名前をサーバーに送信して登録
+          fetch("/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name: name, image: imageData }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message); // 登録結果を表示
+              // 登録に成功した場合、入力欄を初期化
+              nameInput.value = "";
+              imageInput.value = "";
+            });
+        };
+        reader.readAsDataURL(file);
+      });
+    </script>
+  </body>
+</html>

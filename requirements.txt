@@ -1,0 +1,10 @@
+opencv-python==4.9.0.80
+face_recognition==1.3.0
+numpy
+Flask
+Flask-SocketIO
+eventlet
+# 自動整形
+black
+# コードの規則チェック
+flake8
